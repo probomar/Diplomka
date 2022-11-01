@@ -38,3 +38,6 @@ for z in range(z_range):
 
 print(intersection)
 view.show()
+
+
+
