@@ -1,11 +1,12 @@
 import pyvista as pv
+from pyvistagt import BackgroundPlotter
 import numpy as np
 
 
 pv.global_theme.show_edges = True
 z_range = 80
 z_step = 0.005
-fi_range = 5
+fi_range = 20
 fi_step = 1
 
 condyle1 = pv.ParametricEllipsoid(6, 10, 5,  center=(0, 0, 5))
@@ -44,4 +45,3 @@ for fi in range(fi_range):
     actual_view = tibia + flex
     view.add_mesh(actual_view)
     view.show()
-
