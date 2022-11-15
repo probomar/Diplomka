@@ -1,5 +1,4 @@
 import pyvista as pv
-from pyvistagt import BackgroundPlotter
 import numpy as np
 
 
@@ -35,7 +34,7 @@ for fi in range(fi_range):
 
     a = np.where(intersection == 0)
     b = np.where(intersection > 0)
-
+    print(len(b))
     if a[0][0] > b[0][0]:
         z_new = a[0][0] - 1
     else:
