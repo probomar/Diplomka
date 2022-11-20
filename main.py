@@ -1,38 +1,19 @@
 import pyvista as pv
 from pyvistaqt import BackgroundPlotter
 import numpy as np
-import sys
 import os
 
 
 def contact_z():
-    intersection = np.ones([z]) * 5
     flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, z_min], [0, 0, 0, 1]]))
 
-    for _ in range(z):
+    z_new = 0
+    while True:
         flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, z_step], [0, 0, 0, 1]]))
         collision, ncol = tibia.collision(flex)
-        intersection[_] = ncol
-
-    print(intersection)
-    flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_range], [0, 0, 0, 1]]))
-
-    a = np.where(intersection == 0)
-    b = np.where(intersection > 0)
-
-    if b[0].size == z:
-        sys.exit("rozsah z neni dostatecny")
-
-    if a[0][0] > b[0][0]:
-        z_new = a[0][0] - 1
-    else:
-        z_new = b[0][0]
-
-    flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, z_new * z_step], [0, 0, 0, 1]]))
-
-    print('z_new =', z_new)
-    print('z_step =', z_step)
-    print('z_min =', z_min)
+        z_new += 1
+        if ncol == 0:
+            break
 
     print('z =', z_new * z_step + z_min)
 
@@ -42,11 +23,54 @@ def contact_z():
     cor.close()
 
 
+def max_contact_fiy(direction):
+    fiy_new = 0
+    while True:
+        flex.rotate_y(direction, inplace=True)
+        collision, ncol = tibia.collision(flex)
+        fiy_new += 1
+        if ncol != 0:
+            break
+
+    print('fi_y_new =', fiy_new)
+
+    flex.rotate_y(-direction * fiy_new, inplace=True)
+    return fiy_new
+
+
+def contact_fiy_z(direction):
+    z_new = 0
+    fiy_new = 0
+    while True:
+        flex.rotate_y(direction, inplace=True)
+        collision, fincol = tibia.collision(flex)
+        if fincol != 0:
+            flex.rotate_y(-direction, inplace=True)
+            break
+        fiy_new += direction
+        z_new_p = 0
+
+        while True:
+            flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]]))
+            collision, ncol = tibia.collision(flex)
+            if ncol != 0:
+                flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, z_step], [0, 0, 0, 1]]))
+                break
+            z_new_p -= 1
+            z_new -= 1
+
+
 def update_scene():
     flex.rotate_vector(vector=(1, 0, 0), angle=-fi_step, point=axes.origin, inplace=True)
 
     contact_z()
-
+    max_fiy = max_contact_fiy(1)
+    min_fiy = max_contact_fiy(-1)
+    if max_fiy > min_fiy:
+        contact_fiy_z(1)
+    else:
+        contact_fiy_z(-1)
+    print('\n')
     p.update()
 
 
@@ -68,6 +92,13 @@ if __name__ == '__main__':
     flex = femur
 
     contact_z()
+    max_fiy = max_contact_fiy(1)
+    min_fiy = max_contact_fiy(-1)
+    if max_fiy > min_fiy:
+        contact_fiy_z(1)
+    else:
+        contact_fiy_z(-1)
+    print('\n')
 
     p = BackgroundPlotter(window_size=(800, 1000))
 
@@ -80,7 +111,7 @@ if __name__ == '__main__':
     p.add_mesh(flex, style='wireframe')
     p.add_mesh(tibia, style='wireframe')
 
-    p.add_callback(update_scene, count=fi)
+    p.add_callback(update_scene, interval=100, count=fi)
 
     p.show()
     p.app.exec_()
