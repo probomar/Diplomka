@@ -61,15 +61,11 @@ def contact_fiy_z(direction):
             z_new -= 1
 
 
-def update_scene():
-    contact_volumes = tibia.boolean_intersection(flex)
+def axis_of_rotation():
+    # pm = np.array([10000, 10000, 10000])
+    # pl = pm
 
-    # pl = pv.Plotter()
-    # pl.add_mesh(contact_volumes)
-    # pl.add_mesh(tibia) #, style='wireframe')
-    # pl.add_mesh(flex) #, style='wireframe')
-    # pl.add_plane_widget(100)
-    # pl.show()
+    contact_volumes = tibia.boolean_intersection(flex)
 
     threshed = contact_volumes.threshold_percent([0.15, 0.50], invert=True)
     bodies = threshed.split_bodies()
@@ -89,25 +85,34 @@ def update_scene():
     pm = np.mean(points_medial, axis=0)
     pl = np.mean(points_lateral, axis=0)
 
-    print('Medial points:', points_medial, "\n")
-    print(pm, '\n\n')
-    print('Lateral points', points_lateral, "\n")
-    print(pl, '\n\n')
+    if np.isnan(pm[0]):
+        print('Medial point dont exist.')
+    else:
+        print('Medial point = ', pm)
 
-    flex.rotate_vector(vector=pm - pl, angle=-fi_step, point=pm, inplace=True)
+    if np.isnan(pl[0]):
+        print('Lateral point dont exist.\n')
+    else:
+        print('Lateral point = ', pl, "\n")
+
+    axis = pl - pm
+
+    return axis, pm, pl
+
+
+def update_scene():
+    axis, pm, pl = axis_of_rotation()
+    flex.rotate_vector(vector=axis, angle=-fi_step, point=pl, inplace=True)
+    old_axis = axis
+
+    while True:
+        axis, pm, pl = axis_of_rotation()
+        if np.isnan(pm[0]) or np.isnan(pl[0]):
+            flex.rotate_vector(vector=old_axis, angle=-0.1 * fi_step, point=pl, inplace=True)
+        else:
+            break
+
     p.update()
-
-#     flex.rotate_vector(vector=(1, 0, 0), angle=-fi_step, point=axes.origin, inplace=True)
-#
-#     contact_z()
-#     max_fiy = max_contact_fiy(1)
-#     min_fiy = max_contact_fiy(-1)
-#     if max_fiy > min_fiy:
-#         contact_fiy_z(1)
-#     else:
-#         contact_fiy_z(-1)
-#     print('\n')
-#      p.update()
 
 
 pv.global_theme.show_edges = True
@@ -116,13 +121,20 @@ z_step = 0.1
 z_min = -z_step * z / 2
 z_range = z_step * z
 fi = 500
-fi_step = 2
+fi_step = 3
 file = 'cor.txt'
 if os.path.exists(file):
     os.remove(file)
 
 femur = pv.read('models/femur_mini.stl')
 tibia = pv.read('models/tibia_mini.stl')
+
+points = np.array([femur.points[0], femur.points[1], femur.points[58]])
+# p2 = femur.points[100]
+# p3 = femur.points[150]
+
+# print(p1, p2, p3)
+print(points)
 
 flex = femur
 
@@ -143,9 +155,10 @@ p.camera.focal_point = (100, 0, -10)
 axes = pv.Axes(show_actor=True, actor_scale=50, line_width=5)
 axes.origin = (0, 0, 0)
 p.add_actor(axes.actor)
-p.add_mesh(flex) #, style='wireframe')
-p.add_mesh(tibia) #, style='wireframe')
+p.add_mesh(flex)  #, style='wireframe')
+p.add_mesh(tibia)  #, style='wireframe')
+p.add_points(points, render_points_as_spheres=True, point_size=50, color='red')
 
-p.add_callback(update_scene, interval=200, count=fi)
+# p.add_callback(update_scene, interval=200, count=fi)
 p.show()
 p.app.exec()
