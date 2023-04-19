@@ -1,32 +1,39 @@
-import numpy as np
 import pandas as pd
 import math as m
 import forces as f
 from setup import *
+import pygad as pg
+from scipy.optimize import minimize
 
 
 def initialization():
-    contact_z()
-    max_fiy = max_contact_fiy(1)
-    min_fiy = max_contact_fiy(-1)
-    if max_fiy > min_fiy:
-        contact_fiy_z(1)
-    else:
-        contact_fiy_z(-1)
+    # contact_z()
+    # max_fiy = max_contact_fiy(1)
+    # min_fiy = max_contact_fiy(-1)
+    # if max_fiy > min_fiy:
+    #     contact_fiy_z(1)
+    # else:
+    #     contact_fiy_z(-1)
+    #
+    # cor0 = open(file0, 'a')
+    # cor0.write(str('Flexion'))
+    # cor0.write('\n')
+    # cor0.close()
+    # init_transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 20], [0, 0, 0, 1]])
+    # flex.transform(init_transform, inplace=True)
+    # flex_cartilage.transform(init_transform, inplace=True)
 
-    cor0 = open(file0, 'a')
-    cor0.write(str('Flexion'))
-    cor0.write('\n')
-    cor0.close()
+    # p.add_callback(
+    f.force_equilibrium
 
 
 def update_scene():
     p1_1 = np.array(flex.points[14])
     p2_1 = np.array(flex.points[25])
 
-    slip_rotation()
+    # slip_rotation()
     # t.rolling(tibia, flex)
-    # t.rolling_with_ligament(tibia, flex, ACL0)
+    rolling_with_ligament()
 
     p1_2 = np.array(flex.points[14])
     p2_2 = np.array(flex.points[25])
@@ -58,14 +65,16 @@ def rolling():
     flex.rotate_vector(vector=pm - pl, angle=fi_step, point=pm, inplace=True)
 
 
-def rolling_with_ligament(ACL0):
+def rolling_with_ligament():
     pm, pl = before_rotation()
     flex.rotate_vector(vector=pm - pl, angle=fi_step, point=pm, inplace=True)
-    f.force_equilibrium(ACL0)
+    flex_cartilage.rotate_vector(vector=pm - pl, angle=fi_step, point=pm, inplace=True)
+    optimize_position()
+    # f.force_equilibrium(ACL0)
 
-    ACL1 = np.array(tibia.points[2])
-    ACL2 = np.array(flex.points[138])
-    p.add_mesh(pv.Line(ACL1, ACL2), color='r', line_width=2)
+    # ACL1 = np.array(tibia.points[2])
+    # ACL2 = np.array(flex.points[138])
+    # p.add_mesh(pv.Line(ACL1, ACL2), color='r', line_width=2)
 
 
 def contact_z():
@@ -171,11 +180,13 @@ def before_rotation():
         z = 0
         fiy = 0
         while True:
-            collision, ncol = tibia.collision(flex)
+            collision, ncol = (tibia + tibial_cartilage).collision(flex + flex_cartilage)
 
             if ncol == 0:
                 print('z')
-                flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]]))
+                transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]])
+                flex.transform(transform)
+                flex_cartilage.transform(transform)
                 z -= z_step
             else:
                 break
@@ -184,22 +195,28 @@ def before_rotation():
 
         if (not points_medial.any()) and (a == 1):
             print('medial, z')
-            flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]]))
+            transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]])
+            flex.transform(transform)
+            flex_cartilage.transform(transform)
             z -= z_step
             a = 0
         elif (not points_medial.any()) and (a != 1):
             print('medial')
             flex.rotate_y(- fiy_step, inplace=True)
+            flex_cartilage.rotate_y(- fiy_step, inplace=True)
             fiy -= fiy_step
             a = -1
         elif (not points_lateral.any()) and (a == -1):
             print('lateral, z')
-            flex.transform(np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]]))
+            transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]])
+            flex.transform(transform)
+            flex_cartilage.transform(transform)
             z -= z_step
             a = 0
         elif (not points_lateral.any()) and (a != -1):
             print('lateral')
             flex.rotate_y(fiy_step, inplace=True)
+            flex_cartilage.rotate_y(fiy_step, inplace=True)
             fiy += fiy_step
             a = 1
         else:
@@ -221,7 +238,7 @@ def before_rotation():
 
 
 def contact_volume():
-    contact_volumes = tibia.boolean_intersection(flex)
+    contact_volumes = (tibia + tibial_cartilage).boolean_intersection(flex + flex_cartilage)
     threshed = contact_volumes.threshold(0.001, invert=True)
     bodies = threshed.split_bodies()
 
@@ -266,3 +283,54 @@ def actual_axis_of_rotation(p1_1, p2_1, p1_2, p2_2):
 
     axis_of_rotation = pd.DataFrame(np.append(pA, pB).reshape(1, 6))
     axis_of_rotation.to_csv(file, index=False, mode='a', header=False)
+
+
+def function(paramt):
+    x, y, z = paramt
+    fun = f.resultant_force(x, y, z)
+    return fun
+
+
+def position0():
+    flex_position = flex.center
+    # print(flex_position)
+    x0 = flex_position[0]
+    y0 = flex_position[1]
+    z0 = flex_position[2]
+    return x0, y0, z0
+
+
+def fitness_func(solution, solution_idx):
+    fitness = f.resultant_force(solution[0]/10, solution[1]/10, solution[2]/10)
+    return fitness
+
+
+def optimize_position():
+    # ######## POKUS X0 = PUVODNI POLOHA  ######
+    fun = lambda x: f.resultant_force(x[0], x[1], x[2])
+    xf = np.array(position0())
+    # xp = np.array([0.000000001, 0.000001, 0.000001])
+    x0 = xf  # + xp
+    bnds = ((xf[0] - 2, xf[0] + 2), (xf[1] - 2, xf[1] + 2), (xf[2] - 2, xf[2] + 2))
+    res = minimize(fun, x0, method='SLSQP', bounds=bnds, tol=1e-9, options={'disp': True})  # 'ftol': 1e-9,
+    print('Vysledna poloha', res.x)
+
+    # ############ POKUS VYCHYLENI FEMURU #############3
+    # x0 = np.array([-100, 0, 0])
+    # fun = lambda x: f.resultant_force(x[0], x[1], x[2])
+    # res = minimize(fun, x0, method='SLSQP', options={'ftol': 1e-3, 'disp': True})
+    # print('Vysledna poloha', res.x)
+
+    # ##### POKUS GEN. ALG. ######    #
+    # ga_instance = pg.GA(num_generations=50, num_parents_mating=2, fitness_func=fitness_func, sol_per_pop=10, num_genes=3,
+    #                     gene_space=[range(-30, 10), range(20, 70), range(170, 220)])
+    #                     # init_range_low=-5, init_range_high=25)
+    # ga_instance.run()
+    # solution, solution_fitness, solution_idx = ga_instance.best_solution()
+    # print('Parameters of the best solution : {solution}'.format(solution=solution))
+    # print('Fitness value of the best solution : {solution_fitness}'.format(solution_fitness=solution_fitness))
+
+    # x0, y0, z0 = position0()
+    transform = np.array([[1, 0, 0, res.x[0] - x0[0]], [0, 1, 0, res.x[1] - x0[1]], [0, 0, 1, res.x[2] - x0[2]], [0, 0, 0, 1]])
+    flex.transform(transform)  # , inplace=True)
+    flex_cartilage.transform(transform)  # , inplace=True)
