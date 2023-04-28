@@ -1,3 +1,4 @@
+
 import os
 import numpy as np
 import pyvista as pv
@@ -17,8 +18,8 @@ kMCL = 10
 
 ACL0 = 18
 PCL0 = 30
-LCL0 = 40
-MCL0 = 55
+LCL0 = 50
+MCL0 = 30
 
 file0 = 'cor0.txt'
 if os.path.exists(file0):
@@ -31,6 +32,11 @@ file = 'cor_1lig_v2.csv'
 
 if os.path.exists(file):
     os.remove(file)
+
+file1 = 'F_M6.csv'
+
+if os.path.exists(file1):
+    os.remove(file1)
 
 pv.global_theme.show_edges = True
 

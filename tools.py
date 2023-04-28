@@ -2,7 +2,7 @@ import pandas as pd
 import math as m
 import forces as f
 from setup import *
-import pygad as pg
+# import pygad as pg
 from scipy.optimize import minimize
 
 
@@ -291,7 +291,7 @@ def function(paramt):
     return fun
 
 
-def position0():
+def position():
     flex_position = flex.center
     # print(flex_position)
     x0 = flex_position[0]
@@ -308,7 +308,7 @@ def fitness_func(solution, solution_idx):
 def optimize_position():
     # ######## POKUS X0 = PUVODNI POLOHA  ######
     fun = lambda x: f.resultant_force(x[0], x[1], x[2])
-    xf = np.array(position0())
+    xf = np.array(position())
     # xp = np.array([0.000000001, 0.000001, 0.000001])
     x0 = xf  # + xp
     bnds = ((xf[0] - 2, xf[0] + 2), (xf[1] - 2, xf[1] + 2), (xf[2] - 2, xf[2] + 2))

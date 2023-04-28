@@ -253,11 +253,11 @@ def force_equilibrium():
         # input()
 
 
-def resultant_force(x, y, z):
-    x0, y0, z0 = t.position0()
-    transform = np.array([[1, 0, 0, x - x0], [0, 1, 0, y - y0], [0, 0, 1, z - z0], [0, 0, 0, 1]])
-    flex.transform(transform)  # , inplace=True)
-    flex_cartilage.transform(transform)  # , inplace=True)
+def resultant_force():  # x, y, z):
+    # x0, y0, z0 = t.position0()
+    # transform = np.array([[1, 0, 0, x - x0], [0, 1, 0, y - y0], [0, 0, 1, z - z0], [0, 0, 0, 1]])
+    # flex.transform(transform)  # , inplace=True)
+    # flex_cartilage.transform(transform)  # , inplace=True)
 
     # ACL1 = np.array(tibia.points[37])
     # ACL2 = np.array(flex.points[190])
@@ -286,16 +286,14 @@ def resultant_force(x, y, z):
     F_ACL = ligament_force(ACL0, ACL1, ACL2, kACL, 'ACL', 'ACL_force')
     F_PCL = ligament_force(PCL0, PCL1, PCL2, kPCL, 'PCL', 'PCL_force')
     F_LCL = ligament_force(LCL0, LCL1, LCL2, kLCL, 'LCL', 'LCL_force')
-    F_MCL = ligament_force(MCL0, MCL1, MCL2,
-
-                           kMCL, 'MCL', 'MCL_force')
+    F_MCL = ligament_force(MCL0, MCL1, MCL2, kMCL, 'MCL', 'MCL_force')
 
     N, Nsoa = normal_force()
 
     force, moment, site_of_action = result_of_forces_and_moments(F_ACL, ACL2, F_PCL, PCL2, F_LCL, LCL2, F_MCL, MCL2,
                                                                  N, Nsoa)
     force_length = np.linalg.norm(force)
-    moment[1] = 0
+    # moment[1] = 0
     moment_length = np.linalg.norm(moment)
     F_direction = force / np.linalg.norm(force)
     line = pv.Line(site_of_action, site_of_action - force)
