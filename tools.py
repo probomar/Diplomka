@@ -2,6 +2,7 @@ import pandas as pd
 import math as m
 import forces as f
 from setup import *
+import time as tim
 # import pygad as pg
 from scipy.optimize import minimize
 
@@ -27,12 +28,22 @@ def initialization():
     f.force_equilibrium
 
 
+def rotation_angle():
+    global fi
+    fi += fi_step
+    print('fi =', fi)
+
+
 def update_scene():
+    start = tim.time()
     p1_1 = np.array(flex.points[14])
     p2_1 = np.array(flex.points[25])
 
     # slip_rotation()
     # t.rolling(tibia, flex)
+
+    rotation_angle()
+
     rolling_with_ligament()
 
     p1_2 = np.array(flex.points[14])
@@ -41,6 +52,11 @@ def update_scene():
     actual_axis_of_rotation(p1_1, p2_1, p1_2, p2_2)
 
     p.update()
+    end = tim.time()
+    time = end - start
+    print('time =', time)
+    x = np.array(position())
+    print('position =', x, '\n', '\n')
 
 
 def slip_rotation():
@@ -69,7 +85,8 @@ def rolling_with_ligament():
     pm, pl = before_rotation()
     flex.rotate_vector(vector=pm - pl, angle=fi_step, point=pm, inplace=True)
     flex_cartilage.rotate_vector(vector=pm - pl, angle=fi_step, point=pm, inplace=True)
-    optimize_position()
+    f.force_equilibrium4()
+    # optimize_position()
     # f.force_equilibrium(ACL0)
 
     # ACL1 = np.array(tibia.points[2])
@@ -169,6 +186,40 @@ def contact_fiy_z(direction):
 
     cor3.write('\n')
     cor3.close()
+
+
+def contact_point():
+    z = 0
+    while True:
+        collision, ncol = (tibia + tibial_cartilage).collision((flex + flex_cartilage), generate_scalars=True)
+        # print('ncol=', ncol)
+        if ncol != 0:
+            break
+        else:
+            # print('z')
+            transform = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -z_step], [0, 0, 0, 1]])
+            flex.transform(transform)
+            flex_cartilage.transform(transform)
+            z -= z_step
+            print('z=', z)
+
+    contact_volumes = (tibia + tibial_cartilage).boolean_intersection(flex + flex_cartilage)
+    # print(contact_volumes.n_cells)
+    if contact_volumes.n_cells == 0:
+        centr = np.array([0, 0, 0])
+    else:
+        threshed = contact_volumes.threshold()
+        bodies = threshed.split_bodies()
+        volume = np.empty((0, 1), int)
+        center = np.empty((0, 3), int)
+        for i, body in enumerate(bodies):
+            volume = np.append(volume, body.volume)
+            center = np.append(center, [np.array(body.center)], axis=0)
+        # print('i=', i)
+        ind = np.argmax(volume)
+        centr = center[ind]
+    # print('centr=', centr)
+    return centr
 
 
 def before_rotation():

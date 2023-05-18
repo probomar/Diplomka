@@ -78,69 +78,41 @@ F2, M2, x2 = read_data('F_M2.csv')
 F3, M3, x3 = read_data('F_M3.csv')
 F4, M4, x4 = read_data('F_M4.csv')
 F5, M5, x5 = read_data('F_M5.csv')
-
-# df = pd.read_csv('F_M2.csv')
-# F_M2 = df.to_numpy()
-# F2 = np.empty(len(F_M2))
-# M2 = np.empty(len(F_M2))
-# x2 = range(len(F_M2))
-#
-# for i in x2:
-#     F2[i] = F_M2[i, 0]
-#     M2[i] = F_M2[i, 1]
-#
-# df = pd.read_csv('F_M3.csv')
-# F_M3 = df.to_numpy()
-# F3 = np.empty(len(F_M3))
-# M3 = np.empty(len(F_M3))
-# x3 = range(len(F_M3))
-#
-# for i in x3:
-#     F3[i] = F_M3[i, 0]
-#     M3[i] = F_M3[i, 1]
-#
-# df = pd.read_csv('F_M4.csv')
-# F_M4 = df.to_numpy()
-# F4 = np.empty(len(F_M4))
-# M4 = np.empty(len(F_M4))
-# x4 = range(len(F_M4))
-#
-# for i in x4:
-#     F4[i] = F_M4[i, 0]
-#     M4[i] = F_M4[i, 1]
-#
-# df = pd.read_csv('F_M5.csv')
-# F_M5 = df.to_numpy()
-# F5 = np.empty(len(F_M5))
-# M5 = np.empty(len(F_M5))
-# x5 = range(len(F_M5))
-#
-# for i in x5:
-#     F5[i] = F_M5[i, 0]
-#     M5[i] = F_M5[i, 1]
+F6, M6, x6 = read_data('F_M6.csv')
+F7, M7, x7 = read_data('F_M7.csv')
+F8, M8, x8 = read_data('F_M8.csv')
+F9, M9, x9 = read_data('F_M9.csv')
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 plt.suptitle('Constant step')
 plt.subplot(2, 1, 1)
-plt.plot(x1, F1, label='step = 0.0001')
-plt.plot(x2, F2, label='step = 0.00005')
-plt.plot(x3, F3, label='step = 0.00002')
-plt.plot(x4, F4, label='step = 0.00001')
-plt.plot(x5, F5, label='step_F = 0.0001, step_M = 0.00001')
+# plt.plot(x1, F1, label='step = 0.0001')
+# plt.plot(x2, F2, label='step = 0.00005')
+# plt.plot(x3, F3, label='step = 0.00002')
+# plt.plot(x4, F4, label='step = 0.00001')
+# plt.plot(x5, F5, label='step_F = 0.0001, step_M = 0.00001')
+plt.plot(x6, F6, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.05, beta = 1/1.05, 1.3')
+plt.plot(x7, F7, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.05, beta = 1/1.05, 1.2')
+plt.plot(x8, F8, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.1, beta = 1/1.1, 1.3')
+plt.plot(x9, F9, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.15, beta = 1/1.15, 1.3')
 
-plt.plot([0, 4107], [1, 1], label='condition')
+# plt.plot([0, 4107], [1, 1], label='condition')
 # plt.xlabel('iteration')
 plt.ylabel('F [N]')
 plt.legend()
 
 plt.subplot(2, 1, 2)
-plt.plot(x1, M1, label='step = 0.0001')
-plt.plot(x2, M2, label='step = 0.00005')
-plt.plot(x3, M3, label='step = 0.00002')
-plt.plot(x4, M4, label='step = 0.00001')
-plt.plot(x5, M5, label='step_F = 0.0001, step_M = 0.00001')
+# plt.plot(x1, M1, label='step = 0.0001')
+# plt.plot(x2, M2, label='step = 0.00005')
+# plt.plot(x3, M3, label='step = 0.00002')
+# plt.plot(x4, M4, label='step = 0.00001')
+# plt.plot(x5, M5, label='step_F = 0.0001, step_M = 0.00001')
+plt.plot(x6, M6, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.05, beta = 1/1.05, 1.3')
+plt.plot(x7, M7, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.05, beta = 1/1.05, 1.2')
+plt.plot(x8, M8, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.1, beta = 1/1.1, 1.3')
+plt.plot(x9, M9, label=' step_F = 0.0001, step_M = 0.00001, alpha = 1.15, beta = 1/1.15, 1.3')
 
-plt.plot([0, 4107], [1, 1], label='condition')
+# plt.plot([0, 4107], [1, 1], label='condition')
 plt.xlabel('iteration')
 plt.ylabel('M [Nmm]')
 plt.show()
